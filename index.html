@@ -274,6 +274,8 @@
         <h1>Section A: 3D Point Map &amp; Depth Comparison (100 Unseen Real-World Samples from 7 Diverse Datasets)</h1>
         <p class="subtitle">
             Drag to rotate &nbsp;|&nbsp; Scroll to zoom &nbsp;|&nbsp; Right-click drag to pan
+            <br>
+            <span style="font-size:0.85em; color:#666; display:inline-block; margin-top:4px;">Please note: loading the 3D .ply files may take a moment. Thank you for your patience.</span>
         </p>
 
         <!-- Pagination bar -->
@@ -529,15 +531,16 @@
         let EXAMPLES = [];
         let currentPage = 1;
         let totalPages = 1;
-        let activeViewers = [];  // flat list of all live PointCloudViewer instances
+        let sectionAViewers = [];
+        let sectionBViewers = [];
 
         // ═══════════════════════════════════════════════════════════════════
         //  RENDER PAGE
         // ═══════════════════════════════════════════════════════════════════
         function renderPage(page) {
             // Dispose previous viewers
-            for (const v of activeViewers) v.dispose();
-            activeViewers = [];
+            for (const v of sectionAViewers) v.dispose();
+            sectionAViewers = [];
 
             const content = document.getElementById('content');
             content.innerHTML = '';
@@ -596,7 +599,7 @@
                     const viewer = new PointCloudViewer(canvas);
                     viewer.loadPLY(url(ex[key]), loadingEl);
                     rowViewers.push(viewer);
-                    activeViewers.push(viewer);
+                    sectionAViewers.push(viewer);
                 }
 
                 // Wire sync group for this row
@@ -686,7 +689,7 @@
                 const loadingEl = cell.querySelector('.loading');
                 const viewer = new PointCloudViewer(canvas);
                 viewer.loadPLY(url(ex.ply), loadingEl);
-                activeViewers.push(viewer);
+                sectionBViewers.push(viewer);
 
                 section.appendChild(row);
                 contentB.appendChild(section);
