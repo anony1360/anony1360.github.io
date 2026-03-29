@@ -1,7 +1,762 @@
 <!DOCTYPE html>
 <html>
-<head><title>My Site</title></head>
+<head>
+    <meta charset="utf-8">
+    <title>Anonymous</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 1.05em;
+            margin-bottom: 16px;
+        }
+
+        /* ── Pagination controls ── */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: #1a1a1a;
+            padding-bottom: 8px;
+        }
+        .sticky-header h1 {
+            margin-top: 0;
+            padding-top: 16px;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin-bottom: 8px;
+        }
+        .pagination button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 6px 14px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .pagination button:hover:not(:disabled) { background: #484848; }
+        .pagination button:disabled { opacity: 0.35; cursor: default; }
+        .sticky-header { transition: opacity 0.3s, visibility 0.3s; }
+        .sticky-header.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .view-toggle { background: #333; color: #aaa; border: 1px solid #555; border-radius: 5px; padding: 4px 10px; font-size: 0.82em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+        .view-toggle:hover { background: #484848; color: #fff; }
+        .view-toggle.active { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+        .page-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 220px;
+        }
+        #page-label {
+            font-size: 0.85em;
+            color: #bbb;
+        }
+        #page-slider {
+            width: 100%;
+            accent-color: #4a9eff;
+            cursor: pointer;
+        }
+        .example-counter {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* ── Column header ── */
+        .header-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .header-row div {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.95em;
+            padding: 6px 0;
+            border-radius: 4px;
+        }
+        .header-row div:nth-child(1) { color: #aaa;    background: #252525; }
+        .header-row div:nth-child(2) { color: #f4a261; background: #2a2010; }
+        .header-row div:nth-child(3) { color: #2ec4b6; background: #0d2020; }
+        .header-row div:nth-child(4) { color: #4a9eff; background: #0d1a2a; }
+        .header-row div:nth-child(5) { color: #a8e6a3; background: #0d200d; }
+
+        /* ── Depth map row ── */
+        .depth-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .depth-panel {
+            border: 1px solid #333;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #111;
+        }
+        .depth-panel img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .depth-label {
+            font-size: 0.65em;
+            color: #555;
+            text-align: center;
+            padding: 2px 0 3px;
+        }
+
+        /* ── Per-example section ── */
+        .example-section { margin-bottom: 24px; }
+        .example-title {
+            background: #292929;
+            border-left: 3px solid #4a9eff;
+            padding: 7px 12px;
+            margin-bottom: 8px;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #444;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #111;
+        }
+        .input-panel img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .viewer-container {
+            border: 1px solid #444;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            height: 400px;
+        }
+        .viewer-container:hover { border-color: #555; }
+        .viewer-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #111;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #4a9eff;
+            font-size: 0.9em;
+            pointer-events: none;
+        }
+        .error-msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff6b6b;
+            font-size: 0.8em;
+            text-align: center;
+            padding: 10px;
+            pointer-events: none;
+        }
+        .controls-hint {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-size: 0.65em;
+            color: #555;
+            pointer-events: none;
+        }
+        .viewer-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.68em;
+            color: #4a9eff;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid #4a9eff55;
+            border-radius: 4px;
+            padding: 2px 6px;
+            pointer-events: none;
+            letter-spacing: 0.03em;
+        }
+#content { min-height: 400px; }
+        body.hide-pointmap .comparison-row { display: none; }
+        body.hide-depth    .depth-row      { display: none; }
+
+        /* ── Section B ── */
+        .section-divider {
+            border: none;
+            border-top: 1px solid #444;
+            margin: 32px 0 24px;
+        }
+        .header-row-b {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .header-row-b div {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.95em;
+            padding: 6px 0;
+            border-radius: 4px;
+        }
+        .header-row-b div:nth-child(1) { color: #aaa;    background: #252525; }
+        .header-row-b div:nth-child(2) { color: #4a9eff; background: #0d1a2a; }
+        .comparison-row-b {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .resolution-badge {
+            display: inline-block;
+            background: #0d2a1a;
+            color: #4cff84;
+            border: 1px solid #4cff84;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.82em;
+            font-weight: bold;
+            margin-left: 10px;
+            font-family: monospace;
+            letter-spacing: 0.04em;
+        }
+        #content-b {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+    </style>
+</head>
 <body>
-  <h1>Hello, world!</h1>
+    <div class="sticky-header">
+        <h1>Section A: 3D Point Map &amp; Depth Comparison (100 Unseen Real-World Samples from 7 Diverse Datasets)</h1>
+        <p class="subtitle">
+            Drag to rotate &nbsp;|&nbsp; Scroll to zoom &nbsp;|&nbsp; Right-click drag to pan
+        </p>
+
+        <!-- Pagination bar -->
+        <div class="pagination">
+            <button id="btn-prev">&#9664; Prev</button>
+            <div class="page-info">
+                <span id="page-label">Page 1 / 1</span>
+                <input type="range" id="page-slider" min="1" max="1" value="1">
+                <span class="example-counter" id="example-counter">Examples 1–2 of 3</span>
+            </div>
+            <button id="btn-next">Next &#9654;</button>
+            <label style="font-size:0.85em;color:#bbb;margin-left:8px;">
+                Per page:
+                <input type="number" id="per-page" min="1" max="20" value="2"
+                       style="width:50px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;padding:2px 6px;margin-left:4px;">
+            </label>
+            <span style="width:1px;background:#444;align-self:stretch;margin:0 6px;"></span>
+            <span style="font-size:0.85em;color:#bbb;">Show:</span>
+            <button class="view-toggle active" id="toggle-both">Both</button>
+            <button class="view-toggle" id="toggle-depth">Depth only</button>
+            <button class="view-toggle" id="toggle-point">Point map only</button>
+        </div>
+
+        <!-- Column headers -->
+        <div class="header-row" style="margin-bottom:0;">
+            <div>Input Image</div>
+            <div>GeometryCrafter</div>
+            <div>MoGe</div>
+            <div>PointDiT (Ours)</div>
+            <div>GT</div>
+        </div>
+    </div>
+
+    <div id="content"></div>
+
+    <hr class="section-divider">
+    <h1 id="section-b-heading">Section B: Results on Different Image Resolutions</h1>
+    <p class="subtitle">
+        PointDiT handles variable image resolutions with a single model
+        (384×672, 672×384, 448×576, 576×448, 336×768, 288×896).
+    </p>
+    <div id="content-b"></div>
+
+    <hr class="section-divider">
+    <h1>Section C: Different Diffusion Sampling Steps</h1>
+    <p class="subtitle">
+        Our single-step diffusion already significantly outperforms prior works, and increasing the sampling steps further enhances reconstruction details (see the zoomed-in region). 
+    </p>
+    <div style="text-align:center; margin-bottom:24px;">
+        <img src="https://huggingface.co/datasets/anony1360/website/resolve/main/diffusion_sampling_steps.webp"
+             alt="Sampling steps vs detail comparison"
+             style="max-width:100%; border-radius:4px; border:1px solid #333;">
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  CONFIGURATION
+        //  Adjust these three settings for your deployment.
+        // ═══════════════════════════════════════════════════════════════════
+
+        // How many examples to show per page (user-tunable via UI)
+        let EXAMPLES_PER_PAGE = 2;
+
+        // For HuggingFace hosting, set this to your dataset raw-file URL:
+        //   'https://huggingface.co/datasets/YOUR_USER/YOUR_DATASET/resolve/main'
+        // Set to null to use local paths (LOCAL_BASE below).
+        const HF_BASE_URL = 'https://huggingface.co/datasets/anony1360/website/resolve/main';
+
+        // Base path when serving locally from the repo root:
+        //   python -m http.server 8000  →  open /html/five_method_comparison.html
+        // The HTML lives in html/, so relative paths go one level up.
+        const LOCAL_BASE = '..';
+
+        const MANIFEST_URL = `${HF_BASE_URL}/manifest.json`;
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  PATH RESOLVER
+        // ═══════════════════════════════════════════════════════════════════
+        function url(path) {
+            const base = HF_BASE_URL ?? LOCAL_BASE;
+            return `${base}/${path}`;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  POINT CLOUD VIEWER
+        // ═══════════════════════════════════════════════════════════════════
+        class PointCloudViewer {
+            constructor(container) {
+                this.container = container;
+                this.syncGroup = null;
+                this.syncing = false;
+                this._disposed = false;
+
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x111111);
+
+                const w = container.clientWidth || 400;
+                const h = container.clientHeight || 400;
+
+                this.camera = new THREE.PerspectiveCamera(50, w / h, 0.001, 1000);
+                this.camera.position.set(0, 0, 2);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(w, h);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(this.renderer.domElement);
+
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.addEventListener('change', () => this._broadcast());
+
+                this._resizeHandler = () => this._onResize();
+                window.addEventListener('resize', this._resizeHandler);
+
+                this._animate();
+            }
+
+            _onResize() {
+                if (this._disposed) return;
+                const w = this.container.clientWidth;
+                const h = this.container.clientHeight;
+                if (!w || !h) return;
+                this.camera.aspect = w / h;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(w, h);
+            }
+
+            _broadcast() {
+                if (this.syncing || !this.syncGroup) return;
+                for (const v of this.syncGroup) {
+                    if (v === this) continue;
+                    v.syncing = true;
+                    v.camera.position.copy(this.camera.position);
+                    v.camera.quaternion.copy(this.camera.quaternion);
+                    v.controls.target.copy(this.controls.target);
+                    v.controls.update();
+                    v.syncing = false;
+                }
+            }
+
+            loadPLY(fileUrl, loadingEl) {
+                const loader = new PLYLoader();
+                loader.load(
+                    fileUrl,
+                    (geometry) => {
+                        if (this._disposed) { geometry.dispose(); return; }
+                        if (loadingEl) loadingEl.style.display = 'none';
+
+                        geometry.computeBoundingBox();
+                        const center = new THREE.Vector3();
+                        geometry.boundingBox.getCenter(center);
+                        geometry.translate(-center.x, -center.y, -center.z);
+
+                        const hasColor = geometry.attributes.color !== undefined;
+                        const material = new THREE.PointsMaterial({
+                            size: 0.007,
+                            vertexColors: hasColor,
+                            color: hasColor ? undefined : 0x88bbff,
+                            sizeAttenuation: true,
+                        });
+
+                        this.pointCloud = new THREE.Points(geometry, material);
+                        this.scene.add(this.pointCloud);
+                        this._fitCamera();
+                    },
+                    (progress) => {
+                        if (loadingEl && progress.total > 0)
+                            loadingEl.textContent = `Loading… ${Math.round(progress.loaded / progress.total * 100)}%`;
+                    },
+                    (err) => {
+                        console.error('PLY load error:', fileUrl, err);
+                        if (loadingEl) {
+                            loadingEl.textContent = 'Failed to load';
+                            loadingEl.className = 'error-msg';
+                        }
+                    }
+                );
+            }
+
+            _fitCamera() {
+                if (!this.pointCloud) return;
+                const box = new THREE.Box3().setFromObject(this.pointCloud);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                this.camera.position.set(0, 0, maxDim * 1.5);
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+                this._broadcast();
+            }
+
+            _animate() {
+                if (this._disposed) return;
+                requestAnimationFrame(() => this._animate());
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            dispose() {
+                this._disposed = true;
+                window.removeEventListener('resize', this._resizeHandler);
+                this.controls.dispose();
+                if (this.pointCloud) {
+                    this.pointCloud.geometry.dispose();
+                    this.pointCloud.material.dispose();
+                }
+                this.renderer.dispose();
+                this.renderer.domElement.remove();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  SECTION B DATA
+        // ═══════════════════════════════════════════════════════════════════
+        const SECTION_B_DIR = 'mixed_resolutions';
+
+        const SECTION_B_EXAMPLES = [
+            {resolution: '384×672',
+              image: `${SECTION_B_DIR}/00264_indoor_20395048670_09600658ee_b.jpg_input_384x672.png`,
+              ply:   `${SECTION_B_DIR}/00264_indoor_20395048670_09600658ee_b.jpg_pointmap_pred.ply` },
+            {resolution: '672×384',
+              image: `${SECTION_B_DIR}/00253_indoor_18722870906_e44d2dbba6_k.jpg_input_672x384.png`,
+              ply:   `${SECTION_B_DIR}/00253_indoor_18722870906_e44d2dbba6_k.jpg_pointmap_pred.ply` },
+            {resolution: '448×576',
+              image: `${SECTION_B_DIR}/00274_indoor_21818647225_a3863d50e6_b.jpg_input_448x576.png`,
+              ply:   `${SECTION_B_DIR}/00274_indoor_21818647225_a3863d50e6_b.jpg_pointmap_pred.ply` },
+            {resolution: '576×448',
+              image: `${SECTION_B_DIR}/00844_outdoor_53633011957_316c95ec8a_k.jpg_input_576x448.png`,
+              ply:   `${SECTION_B_DIR}/00844_outdoor_53633011957_316c95ec8a_k.jpg_pointmap_pred.ply` },
+            {resolution: '336×768',
+              image: `${SECTION_B_DIR}/00313_indoor_25745261693_fe250d636a_k.jpg_input_336x768.png`,
+              ply:   `${SECTION_B_DIR}/00313_indoor_25745261693_fe250d636a_k.jpg_pointmap_pred.ply` },
+            {resolution: '288×896',
+              image: `${SECTION_B_DIR}/00904_transparent_reflective_50062866621_67ca567ee9_k.jpg_input_288x896.png`,
+              ply:   `${SECTION_B_DIR}/00904_transparent_reflective_50062866621_67ca567ee9_k.jpg_pointmap_pred.ply` },
+        ];
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  PAGINATION STATE
+        // ═══════════════════════════════════════════════════════════════════
+        let EXAMPLES = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let activeViewers = [];  // flat list of all live PointCloudViewer instances
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  RENDER PAGE
+        // ═══════════════════════════════════════════════════════════════════
+        function renderPage(page) {
+            // Dispose previous viewers
+            for (const v of activeViewers) v.dispose();
+            activeViewers = [];
+
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            const start = (page - 1) * EXAMPLES_PER_PAGE;
+            const end = Math.min(start + EXAMPLES_PER_PAGE, EXAMPLES.length);
+            const pageExamples = EXAMPLES.slice(start, end);
+
+            pageExamples.forEach((ex, i) => {
+                const globalIdx = start + i;
+
+                const section = document.createElement('div');
+                section.className = 'example-section';
+
+                const title = document.createElement('div');
+                title.className = 'example-title';
+                title.textContent = `#${globalIdx + 1}  ${ex.label}`;
+                section.appendChild(title);
+
+                const row = document.createElement('div');
+                row.className = 'comparison-row';
+
+                // Input image
+                const imgPanel = document.createElement('div');
+                imgPanel.className = 'input-panel';
+                imgPanel.innerHTML = `
+                    <img src="${url(ex.image)}" alt="Input" loading="eager"
+                         onerror="this.style.background='#222'">
+                `;
+                row.appendChild(imgPanel);
+
+                // Four PLY viewers
+                const slots = [
+                    { key: 'gc',       label: 'GeometryCrafter' },
+                    { key: 'moge',     label: 'MoGe' },
+                    { key: 'pointdit', label: 'PointDiT' },
+                    { key: 'gt',       label: 'GT' },
+                ];
+                const rowViewers = [];
+
+                for (const { key, label } of slots) {
+                    const cell = document.createElement('div');
+                    cell.className = 'viewer-container';
+                    cell.innerHTML = `
+                        <div class="viewer-canvas" style="width:100%;height:100%;"></div>
+                        <div class="loading">Loading…</div>
+                        <div class="viewer-badge">3D</div>
+                        ${key === 'gc' ? '<div class="controls-hint">drag · scroll · right-drag</div>' : ''}
+                    `;
+                    row.appendChild(cell);
+
+                    const canvas = cell.querySelector('.viewer-canvas');
+                    const loadingEl = cell.querySelector('.loading');
+
+                    // Defer viewer creation one frame so layout is complete
+                    const viewer = new PointCloudViewer(canvas);
+                    viewer.loadPLY(url(ex[key]), loadingEl);
+                    rowViewers.push(viewer);
+                    activeViewers.push(viewer);
+                }
+
+                // Wire sync group for this row
+                rowViewers.forEach(v => v.syncGroup = rowViewers);
+
+                section.appendChild(row);
+
+                // Depth map image row
+                const depthRow = document.createElement('div');
+                depthRow.className = 'depth-row';
+
+                // First column: empty placeholder aligned with input panel
+                depthRow.appendChild(document.createElement('div'));
+
+                const depthSlots = [
+                    { key: 'gc_depth',   label: 'depth' },
+                    { key: 'moge_depth', label: 'depth' },
+                    { key: 'pdit_depth', label: 'depth' },
+                    { key: 'gt_depth',   label: 'depth' },
+                ];
+                for (const { key, label } of depthSlots) {
+                    const panel = document.createElement('div');
+                    panel.className = 'depth-panel';
+                    panel.innerHTML = `
+                        <img src="${url(ex[key])}" alt="${label}" loading="lazy"
+                             onerror="this.parentElement.style.display='none'">
+                        <div class="depth-label">${label}</div>
+                    `;
+                    depthRow.appendChild(panel);
+                }
+
+                section.appendChild(depthRow);
+                content.appendChild(section);
+            });
+
+            // Update UI controls
+            document.getElementById('page-label').textContent = `Page ${page} / ${totalPages}`;
+            document.getElementById('page-slider').value = page;
+            document.getElementById('example-counter').textContent =
+                `Examples ${start + 1}–${end} of ${EXAMPLES.length}`;
+            document.getElementById('btn-prev').disabled = page <= 1;
+            document.getElementById('btn-next').disabled = page >= totalPages;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  RENDER SECTION B
+        // ═══════════════════════════════════════════════════════════════════
+        function renderSectionB() {
+            const contentB = document.getElementById('content-b');
+            contentB.innerHTML = '';
+
+            SECTION_B_EXAMPLES.forEach((ex, i) => {
+                const section = document.createElement('div');
+                section.className = 'example-section';
+
+                const title = document.createElement('div');
+                title.className = 'example-title';
+                title.innerHTML = `#${i + 1}<span class="resolution-badge">${ex.resolution}</span>`;
+                section.appendChild(title);
+
+                const row = document.createElement('div');
+                row.className = 'comparison-row-b';
+
+                // Input image
+                const imgPanel = document.createElement('div');
+                imgPanel.className = 'input-panel';
+                imgPanel.innerHTML = `
+                    <img src="${url(ex.image)}" alt="Input" loading="eager"
+                         onerror="this.style.background='#222'">
+                `;
+                row.appendChild(imgPanel);
+
+                // PLY viewer
+                const cell = document.createElement('div');
+                cell.className = 'viewer-container';
+                cell.innerHTML = `
+                    <div class="viewer-canvas" style="width:100%;height:100%;"></div>
+                    <div class="loading">Loading…</div>
+                    <div class="viewer-badge">3D</div>
+                    <div class="controls-hint">drag · scroll · right-drag</div>
+                `;
+                row.appendChild(cell);
+
+                const canvas = cell.querySelector('.viewer-canvas');
+                const loadingEl = cell.querySelector('.loading');
+                const viewer = new PointCloudViewer(canvas);
+                viewer.loadPLY(url(ex.ply), loadingEl);
+                activeViewers.push(viewer);
+
+                section.appendChild(row);
+                contentB.appendChild(section);
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════════════════
+        async function init() {
+            // Load manifest from HuggingFace
+            const resp = await fetch(MANIFEST_URL);
+            EXAMPLES = await resp.json();
+
+            totalPages = Math.ceil(EXAMPLES.length / EXAMPLES_PER_PAGE);
+
+            const slider = document.getElementById('page-slider');
+            slider.max = totalPages;
+            slider.value = 1;
+
+            // Wire controls
+            slider.addEventListener('input', () => {
+                currentPage = parseInt(slider.value);
+                renderPage(currentPage);
+            });
+            document.getElementById('btn-prev').addEventListener('click', () => {
+                if (currentPage > 1) { currentPage--; renderPage(currentPage); }
+            });
+            document.getElementById('btn-next').addEventListener('click', () => {
+                if (currentPage < totalPages) { currentPage++; renderPage(currentPage); }
+            });
+            // View toggles
+            const toggles = {
+                both:  document.getElementById('toggle-both'),
+                depth: document.getElementById('toggle-depth'),
+                point: document.getElementById('toggle-point'),
+            };
+            function setView(mode) {
+                document.body.classList.toggle('hide-depth',    mode === 'point');
+                document.body.classList.toggle('hide-pointmap', mode === 'depth');
+                for (const [k, btn] of Object.entries(toggles))
+                    btn.classList.toggle('active', k === mode);
+            }
+            toggles.both.addEventListener('click',  () => setView('both'));
+            toggles.depth.addEventListener('click', () => setView('depth'));
+            toggles.point.addEventListener('click', () => setView('point'));
+
+            document.getElementById('per-page').addEventListener('change', (e) => {
+                const v = parseInt(e.target.value);
+                if (v >= 1) {
+                    EXAMPLES_PER_PAGE = v;
+                    totalPages = Math.ceil(EXAMPLES.length / EXAMPLES_PER_PAGE);
+                    slider.max = totalPages;
+                    currentPage = 1;
+                    renderPage(1);
+                }
+            });
+
+            renderPage(1);
+            renderSectionB();
+
+            // Hide sticky header when Section B heading reaches the top of the viewport
+            const stickyHeader = document.querySelector('.sticky-header');
+            const sectionBHeading = document.getElementById('section-b-heading');
+            window.addEventListener('scroll', () => {
+                stickyHeader.classList.toggle('hidden', sectionBHeading.getBoundingClientRect().top <= window.innerHeight * 0.5);
+            }, { passive: true });
+        }
+
+        init();
+    </script>
 </body>
 </html>
