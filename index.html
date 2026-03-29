@@ -220,7 +220,9 @@
         }
 #content { min-height: 400px; }
         body.hide-pointmap .comparison-row { display: none; }
+        body.hide-pointmap .depth-row .depth-input-panel { display: flex; }
         body.hide-depth    .depth-row      { display: none; }
+        .depth-row .depth-input-panel { display: none; }
 
         /* ── Section B ── */
         .section-divider {
@@ -289,9 +291,8 @@
             <button id="btn-next">Next &#9654;</button>
             <span style="width:1px;background:#444;align-self:stretch;margin:0 6px;"></span>
             <span style="font-size:0.85em;color:#bbb;">Show:</span>
-            <button class="view-toggle active" id="toggle-both">Both</button>
-            <button class="view-toggle" id="toggle-depth">Depth only</button>
-            <button class="view-toggle" id="toggle-point">Point map only</button>
+            <button class="view-toggle active" id="toggle-both">Point Map &amp; Depth</button>
+            <button class="view-toggle" id="toggle-depth">Depth only (fast loading)</button>
         </div>
 
         <!-- Column headers -->
@@ -606,8 +607,11 @@
                 const depthRow = document.createElement('div');
                 depthRow.className = 'depth-row';
 
-                // First column: empty placeholder aligned with input panel
-                depthRow.appendChild(document.createElement('div'));
+                // First column: input image (hidden in "both" mode, shown in "depth only")
+                const depthImgPanel = document.createElement('div');
+                depthImgPanel.className = 'input-panel depth-input-panel';
+                depthImgPanel.innerHTML = `<img src="${url(ex.image)}" alt="Input" loading="lazy">`;
+                depthRow.appendChild(depthImgPanel);
 
                 const depthSlots = [
                     { key: 'gc_depth',   label: 'depth' },
@@ -720,17 +724,14 @@
             const toggles = {
                 both:  document.getElementById('toggle-both'),
                 depth: document.getElementById('toggle-depth'),
-                point: document.getElementById('toggle-point'),
             };
             function setView(mode) {
-                document.body.classList.toggle('hide-depth',    mode === 'point');
                 document.body.classList.toggle('hide-pointmap', mode === 'depth');
                 for (const [k, btn] of Object.entries(toggles))
                     btn.classList.toggle('active', k === mode);
             }
             toggles.both.addEventListener('click',  () => setView('both'));
             toggles.depth.addEventListener('click', () => setView('depth'));
-            toggles.point.addEventListener('click', () => setView('point'));
 
             renderPage(1);
             renderSectionB();
