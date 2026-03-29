@@ -287,11 +287,6 @@
                 <span class="example-counter" id="example-counter">Examples 1–2 of 3</span>
             </div>
             <button id="btn-next">Next &#9654;</button>
-            <label style="font-size:0.85em;color:#bbb;margin-left:8px;">
-                Per page:
-                <input type="number" id="per-page" min="1" max="20" value="2"
-                       style="width:50px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;padding:2px 6px;margin-left:4px;">
-            </label>
             <span style="width:1px;background:#444;align-self:stretch;margin:0 6px;"></span>
             <span style="font-size:0.85em;color:#bbb;">Show:</span>
             <button class="view-toggle active" id="toggle-both">Both</button>
@@ -312,7 +307,7 @@
     <div id="content"></div>
 
     <hr class="section-divider">
-    <h1 id="section-b-heading">Section B: Results on Different Image Resolutions</h1>
+    <h1 id="section-b-heading">Section B: Results on Different Image Resolutions (6 Unseen Real-World Samples)</h1>
     <p class="subtitle">
         PointDiT handles variable image resolutions with a single model
         (384×672, 672×384, 448×576, 576×448, 336×768, 288×896).
@@ -349,7 +344,7 @@
         // ═══════════════════════════════════════════════════════════════════
 
         // How many examples to show per page (user-tunable via UI)
-        let EXAMPLES_PER_PAGE = 2;
+        const EXAMPLES_PER_PAGE = 2;
 
         // For HuggingFace hosting, set this to your dataset raw-file URL:
         //   'https://huggingface.co/datasets/YOUR_USER/YOUR_DATASET/resolve/main'
@@ -736,17 +731,6 @@
             toggles.both.addEventListener('click',  () => setView('both'));
             toggles.depth.addEventListener('click', () => setView('depth'));
             toggles.point.addEventListener('click', () => setView('point'));
-
-            document.getElementById('per-page').addEventListener('change', (e) => {
-                const v = parseInt(e.target.value);
-                if (v >= 1) {
-                    EXAMPLES_PER_PAGE = v;
-                    totalPages = Math.ceil(EXAMPLES.length / EXAMPLES_PER_PAGE);
-                    slider.max = totalPages;
-                    currentPage = 1;
-                    renderPage(1);
-                }
-            });
 
             renderPage(1);
             renderSectionB();
